@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 ARG MCRITWEB_BRANCH
 ARG MCRIT_TAG
 
@@ -10,7 +10,7 @@ ENV LANGUAGE en_US.UTF-8
 RUN apt-get -y update && apt-get -y upgrade && apt-get install -y --no-install-recommends \
   apt-utils \
   p7zip-full \
-  python3.10 \
+  python3.12 \
   python3-pip \
   python3-dev \
   build-essential \
@@ -22,9 +22,10 @@ RUN apt-get -y update && apt-get -y upgrade && apt-get install -y --no-install-r
   curl \
   libssl-dev
 
-RUN python3.10 -m pip install -U pip setuptools
-RUN mkdir -p /root/.local/lib/python3.10/site-packages/
-RUN ln -s /usr/bin/python3.10 /usr/bin/python
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+RUN python3.12 -m pip install -U setuptools
+RUN mkdir -p /root/.local/lib/python3.12/site-packages/
+RUN ln -s /usr/bin/python3.12 /usr/bin/python
 
 # install specific mcritweb+mcrit versions for this release
 RUN git clone -b "${MCRITWEB_BRANCH}" --single-branch https://github.com/fkie-cad/mcritweb.git /opt/mcritweb
