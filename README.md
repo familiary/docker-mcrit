@@ -57,6 +57,7 @@ MCRIT was officially released as version 1.0.0 at Botconf 2023 ([paper](https://
 
 ## Updates
 
+ * 2026-08-06: MCRIT 1.5.3, MCRITweb 1.4.2 (overall code quality and security improvements)
  * 2026-08-04: MCRIT 1.5.3 (~7x faster matching report loading), MCRITweb 1.4.2
  * 2026-08-04: MCRIT 1.5.2 (Dalvik capability, shingler packaging fix), MCRITweb 1.4.1
  * 2026-07-16: MCRIT 1.5.0 (worker+server moved to ubuntu24.04 / python3.12), MCRITweb 1.4.1
