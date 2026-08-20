@@ -6,6 +6,9 @@ on:
     branches:
       - main
   pull_request:
+  schedule:
+    # drift originates upstream, so waiting for a push here would not notice it
+    - cron: "0 6 * * 1"
 
 jobs: 
  
@@ -21,3 +24,28 @@ jobs:
       - name: Check functionality of the MCRIT image
         run: docker run --rm mcrit /entry_test.sh
 
+  tuning-doc-mirror:
+    name: docs/TUNING.md matches mcrit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+
+      - name: Compare against the canonical copy in mcrit
+        run: |
+          set -euo pipefail
+          # docs/TUNING.md is a verbatim mirror; mcrit holds the canonical copy (see the note at
+          # the top of the file). Compared against main rather than the pinned MCRIT_BRANCH,
+          # because a release tag can predate a documentation fix - v1.6.2 does exactly that -
+          # and the invariant worth enforcing is that the mirror equals the canonical copy.
+          url="https://raw.githubusercontent.com/danielplohmann/mcrit/main/docs/TUNING.md"
+          curl -fsSL "$url" -o /tmp/TUNING.canonical.md
+          if ! diff -u /tmp/TUNING.canonical.md docs/TUNING.md; then
+            echo
+            echo "docs/TUNING.md has drifted from the canonical copy in mcrit."
+            echo "Edit mcrit/docs/TUNING.md, then mirror it here:"
+            echo "  curl -fsSL $url -o docs/TUNING.md"
+            exit 1
+          fi
+          echo "docs/TUNING.md matches the canonical copy in mcrit."
