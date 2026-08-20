@@ -55,6 +55,15 @@ Notes on the individual knobs:
 
 * **Batch size** trades memory for speed: `1000` is ~1.5x faster than `200` for ~1.5x the peak
   memory, while `10000` is no faster than `5000` and costs 2.4–3.7x the memory of `200`.
+* **Pair budget** (`MINHASH_MATCHING_MAX_PAIRS`, default 50,000,000, new in 1.6.2) caps how many
+  candidate pairs a batch accumulates before it is scored, at roughly ~250 B resident per pair.
+  Candidate volume per query function spans five orders of magnitude, so a function count alone
+  cannot bound the tail; the budget does, and at the default it only binds on runaway jobs. The
+  batch size above stays an upper bound on query functions per batch, so both limits apply and
+  lowering either one lowers peak memory. Lowering the budget buys memory with wall time - measured
+  on a 53 M-pair sample: 10 M cost +68 % wall for -40 % peak, 2 M cost +203 % for -49 %, and most of
+  that penalty is batches evicting each other from the MatchingCache when the budget sits far below
+  the candidate union. Set it to `0` to restore fixed-size batches.
 * **Cache ceiling** costs ~314 bytes per retained function. Size it above your largest sample's
   candidate set; when it binds it roughly halves the benefit. Since 1.6.1 evictions are logged,
   so a ceiling that binds is visible in the worker log rather than silent — entries needed by
@@ -72,7 +81,7 @@ Notes on the individual knobs:
   composition.
 * `STORAGE_CANDIDATE_ACCUMULATION`, `MINHASH_MATCHING_VECTORIZED`, `STORAGE_CACHE_FETCH_THREADS`
   and `STORAGE_MATCHING_CACHE_PERSIST` shipped opt-in (default off) in MCRIT 1.6.0 and are on by
-  default from 1.6.1. `STORAGE_MATCHING_CACHE_MAX_BYTES` is 1.6.1 and later; on 1.6.0 size the
+  default from 1.6.1. `MINHASH_MATCHING_MAX_PAIRS` is 1.6.2 and later. `STORAGE_MATCHING_CACHE_MAX_BYTES` is 1.6.1 and later; on 1.6.0 size the
   cache with `STORAGE_MATCHING_CACHE_MAX_ENTRIES` instead, at ~314 B per entry. On 1.5.3 and
   earlier only the batch size, `BAND_MATCHES_REQUIRED` and the mongod cache size apply.
 * All measurements used single-process matching; comparisons against a pooled configuration
