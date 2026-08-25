@@ -10,7 +10,7 @@ class MinHashConfig(ConfigInterface):
     # Store the combination of shingles (unsorted) that were used to create the given MinHash
     MINHASH_TRACK_SHINGLES: bool = False
     # Which minhash calculation strategy should be used
-    MINHASH_STRATEGY: ... = MinHasher.MINHASH_STRATEGY_SEGMENTED
+    MINHASH_STRATEGY: int = MinHasher.MINHASH_STRATEGY_SEGMENTED
     # A function must consist of minimum N instructions to be considered for MinHashing
     MINHASH_FN_MIN_INS: int = 10
     # A function must alternatively consist of minimum N basic blocks to be considered for MinHashing
@@ -27,6 +27,10 @@ class MinHashConfig(ConfigInterface):
     MINHASH_POOL_INDEXING: bool = True
     MINHASH_POOL_MATCHING: bool = True
     # The minimum number of band matches a minhash must have before being considered a candidate for matching
+    # NOTE: deliberately 1 here where MCRIT stock is 2, and kept at 1 in this bump rather than
+    # regenerated. MCRITweb creates its jobs with an explicit k=2, so this default only shows
+    # through for callers going straight to the REST API - which does make those two disagree.
+    # The choice is deferred until the reworked banding lands, since it may settle it anyway.
     BAND_MATCHES_REQUIRED = 1
     # minimum function size for considering PicHash matching
     PICHASH_SIZE: int = 10

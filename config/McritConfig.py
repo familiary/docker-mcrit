@@ -8,14 +8,15 @@ from .StorageConfig import StorageConfig
 
 
 class McritConfig:
-    # NOTE to self: always change this in setup.py as well!
-    VERSION = "1.7.1"
+    # NOTE to self: always change this in pyproject.toml and the README changelog as well!
+    VERSION = "1.8.1"
     # basic pathing info
     CONFIG_FILE_PATH = str(os.path.abspath(__file__))
     PROJECT_ROOT = str(os.path.abspath(os.sep.join([CONFIG_FILE_PATH, "..", ".."])))
 
-    # Authentication token, which can be optionally used to lock down communication with the API
-    AUTH_TOKEN = ""
+    # Authentication token, which can be optionally used to lock down communication with the API.
+    # It can be supplied via the environment, so that it does not have to be stored in a config file.
+    AUTH_TOKEN = os.getenv("MCRIT_AUTH_TOKEN", "")
 
     ### global logging-config setup
     # Only do basicConfig if no handlers have been configured
@@ -30,5 +31,5 @@ class McritConfig:
     QUEUE_CONFIG = QueueConfig()
 
     def __init__(self, log_level=logging.INFO):
-        if len(logging._handlerList) == 0:
+        if not logging.root.handlers:
             logging.basicConfig(level=log_level, format=self.LOG_FORMAT)

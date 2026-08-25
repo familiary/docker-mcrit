@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from mcrit.config.ConfigInterface import ConfigInterface
 
+
 @dataclass
 class GunicornConfig(ConfigInterface):
     # introduce a switch for gunicorn
