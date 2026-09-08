@@ -27,10 +27,14 @@ class MinHashConfig(ConfigInterface):
     MINHASH_POOL_INDEXING: bool = True
     MINHASH_POOL_MATCHING: bool = True
     # The minimum number of band matches a minhash must have before being considered a candidate for matching
-    # NOTE: deliberately 1 here where MCRIT stock is 2, and kept at 1 in this bump rather than
-    # regenerated. MCRITweb creates its jobs with an explicit k=2, so this default only shows
-    # through for callers going straight to the REST API - which does make those two disagree.
-    # The choice is deferred until the reworked banding lands, since it may settle it anyway.
+    # NOTE: deliberately 1 here where MCRIT stock is 2. MCRITweb creates its jobs with an explicit
+    # k=2, so this default only shows through for callers going straight to the REST API - which
+    # does make those two disagree. Previous bumps deferred the choice "until the reworked banding
+    # lands"; it landed in MCRIT 1.9.0 (the explicit band projection and its presets), so the
+    # deferral is now resolvable rather than open: k is query-time, so one index serves every
+    # operating point, and the measured ones are hunt k=1, identification k=2-3, fast k=5. Which
+    # of those a shipped default should be is a product decision, so the value is left at 1 here
+    # and not changed as a side effect of a version bump.
     BAND_MATCHES_REQUIRED = 1
     # minimum function size for considering PicHash matching
     PICHASH_SIZE: int = 10
