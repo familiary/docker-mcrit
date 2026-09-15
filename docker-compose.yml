@@ -1,8 +1,17 @@
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "5"
+
 services:
   mongodb:
     image: mongo:${MONGO_TAG:?}
     container_name: mongodb
     restart: unless-stopped
+    logging: *logging
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - ./storage/mongodb:/data/db
     command: ["mongod", "--quiet"]
@@ -24,9 +33,15 @@ services:
     container_name: mcrit-server
     init: true
     restart: unless-stopped
+    logging: *logging
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       mongodb:
         condition: service_healthy
+    environment:
+      # locks down the API; MCRITweb needs the same value as its server token, see the README
+      MCRIT_AUTH_TOKEN: ${MCRIT_AUTH_TOKEN:-}
     volumes:
       - ./config/:/opt/mcrit/mcrit/config/:ro
     entrypoint:
@@ -47,9 +62,16 @@ services:
     container_name: mcrit-worker
     init: true
     restart: unless-stopped
+    logging: *logging
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       mongodb:
         condition: service_healthy
+    environment:
+      # the worker reaches MongoDB directly and does not authenticate against the API today; passed
+      # so the two halves of the image cannot end up configured differently
+      MCRIT_AUTH_TOKEN: ${MCRIT_AUTH_TOKEN:-}
     volumes:
       - ./config/:/opt/mcrit/mcrit/config/:ro
     entrypoint:
@@ -60,13 +82,18 @@ services:
       context: ./docker/mcritweb/
       args:
         MCRITWEB_BRANCH: "${MCRITWEB_BRANCH:?}"
+        MCRITWEB_TAG: "${MCRITWEB_TAG:?}"
         MCRIT_TAG: "${MCRIT_TAG:?}"
     container_name: mcritweb
     restart: unless-stopped
+    logging: *logging
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       mcrit-server:
         condition: service_healthy
     volumes:
+      # written by uid 10001 in the container: chown -R 10001:10001 storage/mcritweb
       - ./storage/mcritweb:/opt/mcritweb/instance
     entrypoint:
       - /entry_web_prod.sh
@@ -75,6 +102,9 @@ services:
   nginx:
     image: nginx:${NGINX_TAG:?}
     restart: unless-stopped
+    logging: *logging
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       mcritweb:
         condition: service_started

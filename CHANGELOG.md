@@ -35,6 +35,17 @@ deployment that means saying plainly what an operator has to *do*, which is what
 - `docker-compose.yml` sets `restart: unless-stopped` on every service, so a deployment comes back
   after a host reboot. The development compose file deliberately does not.
 - `.dockerignore` in both build contexts, so only the entry scripts are sent to the daemon.
+- **`docker-compose.yml` caps every service's logs** at 5 files of 50 MB on the `json-file` driver,
+  through one `x-logging` anchor, so a chatty container cannot fill the host's disk. Every service
+  also runs with `no-new-privileges:true`.
+- `MCRIT_AUTH_TOKEN` is passed through to `mcrit-server` and `mcrit-worker` from the environment,
+  defaulting to empty. Only the server enforces it today - the worker reaches MongoDB directly -
+  but both halves of one image are configured alike. MCRITweb has no matching variable: it stores
+  the token per server in its own database, so it has to be set once in *Administration -> Server*
+  to the same value. The README's production checklist says so.
+- A `lint` job in CI: hadolint on both Dockerfiles, `docker compose config -q` on both compose
+  files, and shellcheck over every `.sh`. `.hadolint.yaml` records why apt and pip version pinning
+  are not enforced here.
 
 ### Changed
 
@@ -70,6 +81,23 @@ deployment that means saying plainly what an operator has to *do*, which is what
 - The entry scripts run under `set -eu` and `exec` their long-running process, so signals reach it
   and `docker compose stop` is not a ten-second wait. The mcrit services run under `init: true`,
   because a Python process as PID 1 has no default `SIGTERM` handler and would ignore the signal.
+- **Both images are built in two stages and run as a non-root user.** A `builder` stage carries the
+  toolchain and installs into a `/opt/venv` virtualenv; the runtime stage starts from the same base
+  and adds only what running needs, copying the venv and the source across. That takes the MCRIT
+  image from 1.19 GB to 714 MB and the MCRITweb image from 1.28 GB to 787 MB. Both run as uid
+  10001 at the end, which makes `./storage/mcritweb` - a host bind mount - something the operator
+  has to hand over once: `chown -R 10001:10001 storage/mcritweb`. The MCRITweb entry scripts exit
+  with that command in the message rather than failing obscurely later. MCRIT stays an editable
+  install, because the compose files mount `config/` over the package's own `mcrit/config/` and
+  that has to be what the running package reads.
+- The base images are pinned by digest rather than by the `24.04` tag, so a rebuild cannot silently
+  pick up a different Ubuntu. Dependabot proposes the digest bumps. Both images carry
+  `org.opencontainers.image.source`, `.version` and `.licenses`, and record the commit they were
+  built from in `/opt/mcrit/.git-revision` and `/opt/mcritweb/.git-revision` - a label cannot hold
+  a value resolved during the build.
+- `entry_test.sh` no longer installs pytest at startup: the non-root runtime user cannot, and the
+  image carries it. It runs `pytest -m 'not mongo'` directly, which is what `make test-nomongo`
+  runs, so the image needs no `make`.
 - `config/` and the NGINX configuration are mounted read-only.
 
 ### Removed

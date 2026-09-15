@@ -45,6 +45,24 @@ $ docker-compose -f docker-compose-dev.yml up
 ```
 Note that running in development mode will not start up NGINX, meaning you can reach MCRIT only via ports `5000` (frontend) and `8000` (backend).
 
+### Production checklist
+
+* **Serve over TLS.** Switch the `nginx` service to `mcritweb_ssl.conf` and fill in `./nginx/ssl/`,
+  as described above. The plain configuration exists for a first look, not for a deployment.
+* **Lock down the API.** Set `MCRIT_AUTH_TOKEN` in the environment (or in `.env`); `docker-compose.yml`
+  passes it to the server and the worker, and the server refuses unauthenticated requests once it is
+  set. MCRITweb has no matching variable - it keeps the token per server in its own database - so
+  after the first start put the same value into *Server* (the admin entry in the user menu), under
+  *Change Backend Server*. Without the pairing, MCRITweb's own calls are rejected too.
+* **Own the instance directory.** Both images run as uid 10001, and `./storage/mcritweb` is a host
+  bind mount, so on Linux it has to be given to that uid once: `chown -R 10001:10001 storage/mcritweb`.
+  MCRITweb exits at startup with that command in the message if it cannot write there.
+* **Back up `./storage/mongodb`.** A file-level copy is only valid with everything stopped; for a
+  running instance stream a dump out instead:
+  `docker compose exec -T mongodb mongodump --archive --gzip > mcrit-dump.archive.gz`.
+* **Log rotation is already handled**: every service logs to the local `json-file` driver capped at
+  5 files of 50 MB, so no container can fill the disk.
+
 ## Usage
 
 For an explanation of the usage of MCRIT itself, please refer to the respective repositories for 

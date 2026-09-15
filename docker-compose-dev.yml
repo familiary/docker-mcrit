@@ -59,6 +59,7 @@ services:
       context: ./docker/mcritweb/
       args:
         MCRITWEB_BRANCH: "${MCRITWEB_BRANCH:?}"
+        MCRITWEB_TAG: "${MCRITWEB_TAG:?}"
         MCRIT_TAG: "${MCRIT_TAG:?}"
     container_name: mcritweb
     depends_on:
