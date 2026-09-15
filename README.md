@@ -46,6 +46,12 @@ own `mcrit/config/`. The deviations from MCRIT's stock configuration are `STORAG
 `QUEUE_SERVER` and `BAND_MATCHES_REQUIRED`, each carrying a comment saying why. `docs/TUNING.md`
 mirrors the upstream tuning guide.
 
+MongoDB reads `mongodb/mongod.conf`, mounted read-only into the container, so its settings are a
+file to edit rather than flags appended to a `command:` list. The WiredTiger cache size is the
+setting worth revisiting: it defaults to about half of the host's RAM minus 1 GB, which is too much
+when MongoDB shares the host with the workers. The file sets no log path on purpose, so `mongod`
+keeps logging to stdout and `docker compose logs mongodb` shows it.
+
 NGINX serves plain HTTP by default, which is meant for a first look. For TLS, copy
 `nginx/ssl/fullchain.pem.example` and `nginx/ssl/privkey.pem.example` to the same names without the
 `.example` suffix, fill them with the certificate and key, and in the `nginx` service of

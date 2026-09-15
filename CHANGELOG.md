@@ -46,6 +46,12 @@ deployment that means saying plainly what an operator has to *do*, which is what
 - A `lint` job in CI: hadolint on both Dockerfiles, `docker compose config -q` on both compose
   files, and shellcheck over every `.sh`. `.hadolint.yaml` records why apt and pip version pinning
   are not enforced here.
+- **A tracked `mongodb/mongod.conf`**, mounted read-only at `/etc/mongod.conf`
+  ([#3](https://github.com/danielplohmann/docker-mcrit/issues/3)), so MongoDB's settings are a file
+  to edit rather than flags to append to a `command:` list. It carries a commented-out
+  `storage.wiredTiger.engineConfig.cacheSizeGB`, which is the setting worth revisiting on a host
+  MongoDB shares - the default cache is about half of RAM minus 1 GB. `mongod` still logs to
+  stdout: the file deliberately sets no `systemLog.path`.
 
 ### Changed
 
