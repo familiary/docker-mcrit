@@ -46,6 +46,19 @@ deployment that means saying plainly what an operator has to *do*, which is what
 - A `lint` job in CI: hadolint on both Dockerfiles, `docker compose config -q` on both compose
   files, and shellcheck over every `.sh`. `.hadolint.yaml` records why apt and pip version pinning
   are not enforced here.
+- **An untracked `./config.local/` overlays the shipped `./config/`**
+  ([#8](https://github.com/danielplohmann/docker-mcrit/issues/8)). The containers no longer mount
+  `config/` over the installed package: they copy the shipped defaults into it at startup and then
+  copy `config.local/` on top, so a deployment's own settings survive a `git pull` instead of
+  colliding with it, and `config/` stays a reviewable default rather than a file every operator
+  edits. Only the files actually overridden belong in `config.local/`, as whole modules.
+- **Every MCRIT container reports configuration drift at startup**
+  ([#8](https://github.com/danielplohmann/docker-mcrit/issues/8)). The image keeps a copy of the
+  configuration the installed MCRIT ships, and the entry scripts compare the settings it defines
+  against the assembled configuration, printing
+  `WARNING: <file>.py is missing settings the installed MCRIT defines: ...` for each module that has
+  fallen behind. It warns rather than fails: a missing setting is a deployment that is
+  silently not using an upstream default, not a reason to refuse to start.
 
 ### Changed
 
@@ -88,8 +101,8 @@ deployment that means saying plainly what an operator has to *do*, which is what
   10001 at the end, which makes `./storage/mcritweb` - a host bind mount - something the operator
   has to hand over once: `chown -R 10001:10001 storage/mcritweb`. The MCRITweb entry scripts exit
   with that command in the message rather than failing obscurely later. MCRIT stays an editable
-  install, because the compose files mount `config/` over the package's own `mcrit/config/` and
-  that has to be what the running package reads.
+  install, because the entry scripts assemble the configuration into the package's own
+  `mcrit/config/` and that has to be what the running package reads.
 - The base images are pinned by digest rather than by the `24.04` tag, so a rebuild cannot silently
   pick up a different Ubuntu. Dependabot proposes the digest bumps. Both images carry
   `org.opencontainers.image.source`, `.version` and `.licenses`, and record the commit they were
@@ -98,7 +111,8 @@ deployment that means saying plainly what an operator has to *do*, which is what
 - `entry_test.sh` no longer installs pytest at startup: the non-root runtime user cannot, and the
   image carries it. It runs `pytest -m 'not mongo'` directly, which is what `make test-nomongo`
   runs, so the image needs no `make`.
-- `config/` and the NGINX configuration are mounted read-only.
+- The NGINX configuration is mounted read-only, and so are the two configuration directories the
+  MCRIT containers assemble their configuration from.
 
 ### Removed
 

@@ -7,3 +7,5 @@ repositories/mcrit
 repositories/mcritweb
 nginx/ssl/*.pem
 .venv/
+config.local/*
+!config.local/README
