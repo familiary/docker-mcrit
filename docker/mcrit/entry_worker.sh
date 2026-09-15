@@ -1,4 +1,4 @@
-#!/bin/sh 
-sleep 1
+#!/bin/sh
+set -eu
 cd /opt/mcrit
-python -m mcrit worker
+exec python -m mcrit worker

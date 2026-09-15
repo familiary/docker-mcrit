@@ -23,16 +23,62 @@ deployment that means saying plainly what an operator has to *do*, which is what
 
 ### Added
 
-- A pull request that changes what a deployment is built from - `docker/`, `nginx/`, `config/`,
-  the compose files, `.env` or the helper scripts - has to add an entry here or carry the
+- A pull request that changes what a deployment is built from or how it is checked - `docker/`,
+  `nginx/`, `config/`, `.github/`, the compose files, `.env` or the helper scripts - has to add an
+  entry here or carry the
   `no-changelog` label; CI checks it. `RELEASING.md` describes how a bump is done and where this
   repository sits in the ecosystem's release order.
 - Dependabot watches the pinned actions and the Ubuntu base images of both Dockerfiles.
+- Both compose files declare healthchecks for `mongodb` and `mcrit-server`, and every dependent
+  service waits for them rather than for the container to merely exist. The old `sleep 1` at the
+  top of each entry script is gone with them.
+- `docker-compose.yml` sets `restart: unless-stopped` on every service, so a deployment comes back
+  after a host reboot. The development compose file deliberately does not.
+- `.dockerignore` in both build contexts, so only the entry scripts are sent to the daemon.
 
 ### Changed
 
 - CI pins `actions/checkout` to a commit SHA, no longer keeps the checkout's credentials on the
-  runner, and runs with a read-only token.
+  runner, and runs with a read-only token. It now builds both images with Buildx and a GitHub
+  Actions layer cache, reading the tags from `.env` instead of restating them.
+- **MongoDB moves from 5.0 to 8.0.** A fresh instance needs nothing. An existing
+  `./storage/mongodb` cannot jump there in one go - MongoDB refuses to skip a major version - so it
+  has to be stepped `5.0` -> `6.0` -> `7.0` -> `8.0`, raising `featureCompatibilityVersion` at each
+  step; see *Upgrading MongoDB from 5.0* in the README, or `./reset.sh` if the corpus is
+  disposable. `mongod` now logs to stdout, so `docker compose logs mongodb` shows what it is doing
+  and `logs/mongodb/` is gone.
+- **MCRITweb is served by gunicorn** (2 workers, 8 threads each, 300 s timeout) instead of the
+  Flask development server, which was never meant to take production traffic. The image installs
+  gunicorn explicitly because MCRITweb's `requirements.txt` does not list it, and no longer sets
+  `FLASK_DEBUG=1` - the development compose file's entry script exports it where it belongs.
+- **NGINX is pinned to `nginx:${NGINX_TAG}` (`1.29-alpine`) instead of `nginx:latest`**, so an
+  upgrade is a reviewable change to `.env` rather than whatever a pull happened to fetch. Every
+  interpolated tag in both compose files is now `${VAR:?}`, which fails the run with a named
+  variable instead of silently resolving to `image:`.
+- `nginx/mcritweb_ssl.conf` serves TLS 1.2 and 1.3 with the Mozilla intermediate cipher list and
+  `ssl_prefer_server_ciphers off`. `ssl_dhparam` is dropped along with the DHE suites that needed
+  it, and HSTS no longer asks for `preload` - that is a decision for whoever owns the domain, not
+  a default.
+- The MCRIT server and worker run from one `mcrit:${MCRIT_TAG}` image built once by `mcrit-server`,
+  rather than two identical images built twice. `build.sh` and `test_build.sh` build through
+  `docker compose` accordingly.
+- Both Dockerfiles build as one apt layer with the package lists removed afterwards, clone shallow,
+  and cache pip downloads across builds. `apt-get upgrade` is gone: it defeats layer caching and
+  makes the base-image pin a suggestion. `gcc-multilib` is no longer installed: nothing needs a
+  32-bit toolchain, and the package does not exist on arm64, so the images now build on Apple
+  Silicon and other arm64 hosts.
+- The entry scripts run under `set -eu` and `exec` their long-running process, so signals reach it
+  and `docker compose stop` is not a ten-second wait. The mcrit services run under `init: true`,
+  because a Python process as PID 1 has no default `SIGTERM` handler and would ignore the signal.
+- `config/` and the NGINX configuration are mounted read-only.
+
+### Removed
+
+- **`nginx/ssl/*.pem` are no longer tracked**; the placeholders ship as `*.pem.example` and the
+  real files are gitignored, so a private key cannot be committed by accident. Copy the examples
+  and fill them in. `dhparam.pem` is not needed any more and is gone.
+- `FLASK_ENV` is unset everywhere. It has done nothing since Flask 2.3, and the value here was a
+  filesystem path.
 
 ## [2026-09-08] - MCRIT 1.9.0, MCRITweb 1.4.8
 

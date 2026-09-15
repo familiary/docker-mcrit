@@ -32,8 +32,8 @@ By default, the NGINX included in this setup is only listening for the `server_n
 based on the specifics of your server.
 
 If you want to run the service over HTTPS
-* you will need to adjust the NGINX service of the `docker-compose.yml` to use the `./nginx/mcritweb_ssl.conf` instead of `./nginx/mcritweb_plain.conf` and 
-* Fill the respective files in `./nginx/ssl` with a certificate, private key, and ideally fresh Diffie-Hellman parameters.
+* you will need to adjust the NGINX service of the `docker-compose.yml` to use the `./nginx/mcritweb_ssl.conf` instead of `./nginx/mcritweb_plain.conf` and
+* copy `./nginx/ssl/fullchain.pem.example` and `./nginx/ssl/privkey.pem.example` to the same names without the `.example` suffix and fill them with your certificate and private key. The `.pem` files themselves are gitignored, so a real key cannot be committed by accident.
 
 ### Development Mode
 
@@ -52,6 +52,29 @@ For an explanation of the usage of MCRIT itself, please refer to the respective 
 * frontend: [MCRITweb](https://github.com/fkie-cad/mcritweb) ([documentation](https://github.com/fkie-cad/mcritweb/tree/master/documentation))
 
 ## Maintenance
+
+### Upgrading MongoDB from 5.0
+
+`.env` pins `MONGO_TAG=8.0`. A **fresh** instance needs nothing: start it and MongoDB 8.0 creates
+the database. An **existing** `./storage/mongodb` written by 5.0 cannot be opened by 8.0 directly -
+MongoDB refuses to skip a major version - so it has to be stepped `5.0` -> `6.0` -> `7.0` -> `8.0`,
+raising `featureCompatibilityVersion` at each step before moving on. Alternatively, if the corpus is
+disposable, run `./reset.sh` and re-import.
+
+For each of `6.0`, `7.0` and `8.0` in turn, with everything else stopped:
+
+```bash
+$ docker compose down
+$ sed -i 's/^MONGO_TAG=.*/MONGO_TAG=6.0/' .env     # then 7.0, then 8.0
+$ docker compose up -d mongodb
+$ docker compose exec mongodb mongosh --quiet --eval 'db.adminCommand({setFeatureCompatibilityVersion: "6.0"})'
+```
+
+Wait for the `mongodb` service to report healthy before setting the FCV, and confirm it took with
+`db.adminCommand({getParameter: 1, featureCompatibilityVersion: 1})`. From MongoDB 7.0 onwards the
+command additionally requires `confirm: true`, so the 7.0 and 8.0 steps read
+`{setFeatureCompatibilityVersion: "7.0", confirm: true}`. Back up `./storage/mongodb` first; the
+upgrade is not reversible once the FCV has been raised.
 
 ### Completing the MCRIT 1.7.0 disassembly split
 
