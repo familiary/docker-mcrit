@@ -5,8 +5,8 @@ in the one way that applies to it: `CHANGELOG.md` is the single authoritative re
 pull now gives an operator, and every change to it is written when the change merges, not
 reconstructed later. The other ecosystem repositories
 ([smda](https://github.com/danielplohmann/smda), [purepdb](https://github.com/danielplohmann/purepdb),
-[mcrit](https://github.com/danielplohmann/mcrit), [mcritweb](https://github.com/fkie-cad/mcritweb),
-[mcrit-plugin](https://github.com/danielplohmann/mcrit-plugin)) release on a `vX.Y.Z` tag; this one
+[mcrit](https://github.com/familiary/mcrit), [mcritweb](https://github.com/familiary/mcritweb),
+[mcrit-plugin](https://github.com/familiary/mcrit-plugin)) release on a `vX.Y.Z` tag; this one
 does not carry a version of its own.
 
 ## What a release is here

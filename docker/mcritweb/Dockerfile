@@ -18,7 +18,7 @@ ENV PATH="/opt/venv/bin:${PATH}"
 RUN --mount=type=cache,target=/root/.cache/pip pip install -U setuptools
 
 # install specific mcritweb+mcrit versions for this release
-RUN git clone --depth 1 -b "${MCRITWEB_BRANCH}" --single-branch https://github.com/fkie-cad/mcritweb.git /opt/mcritweb \
+RUN git clone --depth 1 -b "${MCRITWEB_BRANCH}" --single-branch https://github.com/familiary/mcritweb.git /opt/mcritweb \
   && git -C /opt/mcritweb rev-parse HEAD > /opt/mcritweb/.git-revision \
   && rm -rf /opt/mcritweb/.git
 # gunicorn is the WSGI server entry_web_prod.sh runs; MCRITweb's requirements.txt does not list it
@@ -31,7 +31,7 @@ RUN --mount=type=cache,target=/root/.cache/pip pip install \
 FROM ubuntu:24.04@sha256:224a1869083a311ef3f13648a154ba79832fbef6364d31493642ca03082da254
 ARG MCRITWEB_TAG
 
-LABEL org.opencontainers.image.source="https://github.com/fkie-cad/mcritweb" \
+LABEL org.opencontainers.image.source="https://github.com/familiary/mcritweb" \
       org.opencontainers.image.version="${MCRITWEB_TAG}" \
       org.opencontainers.image.licenses="GPL-3.0-only"
 

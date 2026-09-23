@@ -21,6 +21,14 @@ deployment that means saying plainly what an operator has to *do*, which is what
 
 ## [Unreleased]
 
+### Changed
+
+- The images and `clone_repositories.sh` clone from `github.com/familiary/*`, where MCRIT, MCRITweb
+  and this repository now live. The old paths still redirect, so this changes nothing about what is
+  built - but a redirect stops the moment a repository of the same name appears under the old owner,
+  and the two places that would break are build-time clones. `danielplohmann/smda` and
+  `danielplohmann/purepdb` are deliberately unchanged: they did not move.
+
 ### Added
 
 - A pull request that changes what a deployment is built from or how it is checked - `docker/`,
