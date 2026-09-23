@@ -67,6 +67,22 @@ setting worth revisiting: it defaults to about half of the host's RAM minus 1 GB
 when MongoDB shares the host with the workers. The file sets no log path on purpose, so `mongod`
 keeps logging to stdout and `docker compose logs mongodb` shows it.
 
+MCRITweb reads `storage/mcritweb/config.py`, its Flask instance configuration, which is not tracked
+here. **`TRUSTED_PROXY_COUNT` belongs in it.** From 1.5.0 MCRITweb meters failed logins per source
+address, and because everything here is served through the included NGINX it sees NGINX's address
+rather than the caller's unless told how many proxies to look past. Left at the default, ten failed
+logins from anywhere lock out every user for fifteen minutes:
+
+```python
+TRUSTED_PROXY_COUNT = 1
+```
+
+`1` is the count for this deployment as shipped - the NGINX in `docker-compose.yml` and nothing
+else. Add one for each further proxy in front of it. Counting matters in both directions: too low
+meters every user together, too high lets a caller pick their own throttle key by sending the header
+themselves. Development mode starts no NGINX, so an instance reached directly on port 5000 wants the
+default of `0` and needs no file.
+
 NGINX serves plain HTTP by default, which is meant for a first look. For TLS, copy
 `nginx/ssl/fullchain.pem.example` and `nginx/ssl/privkey.pem.example` to the same names without the
 `.example` suffix, fill them with the certificate and key, and in the `nginx` service of
