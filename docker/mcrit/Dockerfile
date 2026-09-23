@@ -27,7 +27,7 @@ RUN mkdir -p /root/.local/lib/python3.12/site-packages/
 RUN ln -s /usr/bin/python3.12 /usr/bin/python
 
 # install mcrit
-RUN git clone -b "${MCRIT_BRANCH}" --single-branch https://github.com/danielplohmann/mcrit.git /opt/mcrit
+RUN git clone -b "${MCRIT_BRANCH}" --single-branch https://github.com/familiary/mcrit.git /opt/mcrit
 # MCRIT >= 1.8.0 declares its dependencies in pyproject.toml, so a single editable
 # install pulls them in - there is no requirements.txt to read anymore
 RUN python -m pip install -e /opt/mcrit

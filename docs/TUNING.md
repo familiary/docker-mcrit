@@ -1,8 +1,8 @@
 # Tuning an MCRIT deployment
 
-> **Canonical copy:** `docs/TUNING.md` in the [mcrit](https://github.com/danielplohmann/mcrit)
+> **Canonical copy:** `docs/TUNING.md` in the [mcrit](https://github.com/familiary/mcrit)
 > repository, which is where the config classes whose defaults this document describes live. The
-> copy in [docker-mcrit](https://github.com/danielplohmann/docker-mcrit) is a verbatim mirror:
+> copy in [docker-mcrit](https://github.com/familiary/docker-mcrit) is a verbatim mirror:
 > edit mcrit's, then copy the file over, and never the other way round. A change to a default in
 > `MinHashConfig` or `StorageConfig` should update this document in the same commit.
 

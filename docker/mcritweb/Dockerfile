@@ -28,7 +28,7 @@ RUN mkdir -p /root/.local/lib/python3.12/site-packages/
 RUN ln -s /usr/bin/python3.12 /usr/bin/python
 
 # install specific mcritweb+mcrit versions for this release
-RUN git clone -b "${MCRITWEB_BRANCH}" --single-branch https://github.com/fkie-cad/mcritweb.git /opt/mcritweb
+RUN git clone -b "${MCRITWEB_BRANCH}" --single-branch https://github.com/familiary/mcritweb.git /opt/mcritweb
 RUN python -m pip install mcrit==${MCRIT_TAG}
 # install remaining requirements
 RUN python -m pip install -r /opt/mcritweb/requirements.txt
