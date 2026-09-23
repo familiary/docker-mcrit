@@ -1,0 +1,8 @@
+ignored:
+  # Ubuntu's archive keeps one version of each package per release and drops it on the next point
+  # update, so a pinned apt version is a build that stops working rather than a reproducible one.
+  # The base images are pinned by digest instead, which fixes the package set for real.
+  - DL3008
+  # setuptools, pytest and gunicorn are build and test tooling rather than part of what is deployed;
+  # the deployed versions are pinned by MCRIT_TAG, MCRITWEB_BRANCH and the upstream pyproject.toml.
+  - DL3013

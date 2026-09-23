@@ -22,9 +22,11 @@ Wait for the upstream release to exist - its tag is what the Dockerfiles clone, 
 version is what the MCRITweb image installs - then, in one pull request:
 
 1. Set `MCRIT_TAG`/`MCRIT_BRANCH` and/or `MCRITWEB_TAG`/`MCRITWEB_BRANCH` in `.env`.
-2. Regenerate `config/` from the new MCRIT's stock configuration, keeping the deviations the
-   README documents (`STORAGE_SERVER`/`QUEUE_SERVER` pointing at the `mongodb` service, and
-   `BAND_MATCHES_REQUIRED`).
+2. Regenerate `config/` from the new MCRIT's stock configuration, keeping this deployment's
+   deviations: `STORAGE_SERVER` in `config/StorageConfig.py` and `QUEUE_SERVER` in
+   `config/QueueConfig.py` pointing at the `mongodb` service, and `BAND_MATCHES_REQUIRED` in
+   `config/MinHashConfig.py`. Each carries a comment saying why; the `CHANGELOG.md` entry for the
+   bump that introduced it has the longer rationale.
 3. Mirror `docs/TUNING.md` from mcrit if it changed there (CI checks it).
 4. In `CHANGELOG.md`, rename `## [Unreleased]` to `## [YYYY-MM-DD] - MCRIT X.Y.Z, MCRITweb A.B.C`,
    carry this repository's own unreleased changes into it, and write the `Upgrading` section from
@@ -34,7 +36,8 @@ version is what the MCRITweb image installs - then, in one pull request:
 
 ## Changes to this repository itself
 
-Dockerfiles, entry scripts, compose files, NGINX, the shipped `config/`, the helper scripts: a pull
+Dockerfiles, entry scripts, compose files, NGINX, the shipped `config/`, the helper scripts, the
+workflows under `.github/`: a pull
 request that changes any of them adds a bullet under `## [Unreleased]` or carries the
 `no-changelog` label. The `Changelog` check enforces it. Those bullets are carried into the next
 dated entry, so an operator reading it sees the deployment changes alongside the version bump.
@@ -49,4 +52,9 @@ entry says so, as the 2026-09-08 entry does.
 
 ## Maintainer configuration
 
-- **Label** `no-changelog`, used by the changelog check.
+- **Label** `no-changelog`, used by the changelog check. It does not exist until someone creates
+  it, and the check cannot be waived without it:
+
+  ```bash
+  gh label create no-changelog --description "Deployment change that genuinely needs no changelog entry"
+  ```

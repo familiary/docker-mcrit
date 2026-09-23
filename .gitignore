@@ -1,8 +1,9 @@
 logs/mcrit/
 logs/mcritweb/
-logs/mongodb/
 logs/nginx/
 storage/mcritweb
 storage/mongodb
 repositories/mcrit
 repositories/mcritweb
+nginx/ssl/*.pem
+.venv/

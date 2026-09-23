@@ -50,7 +50,7 @@ jobs:
 
           changed="$(gh api --paginate "repos/${REPOSITORY}/pulls/${PR_NUMBER}/files" --jq '.[].filename')"
 
-          if ! printf '%s\n' "${changed}" | grep -qE '^(docker/|nginx/|config/|docker-compose[^/]*\.yml$|\.env$|[^/]*\.sh$)'; then
+          if ! printf '%s\n' "${changed}" | grep -qE '^(docker/|nginx/|config/|\.github/|docker-compose[^/]*\.yml$|\.env$|[^/]*\.sh$)'; then
             echo "Nothing a deployment is built from changed; entry not required."
             exit 0
           fi

@@ -7,7 +7,8 @@
 #
 # The migration is resumable - an interrupted run costs only the batch in flight - and
 # re-running it after completion does nothing.
-source .env set
+# shellcheck disable=SC1091
+source .env
 
 if docker compose version >/dev/null 2>&1; then COMPOSE="docker compose"; else COMPOSE="docker-compose"; fi
 
@@ -22,7 +23,7 @@ echo "  * byte-for-byte verification is only possible BEFORE this runs (rehearse
 echo "    '--mode copy --target <db>', or take a dump first)"
 echo
 printf 'Proceed with the in-place migration (y/n)? '
-read key_result
+read -r key_result
 if [ "$key_result" != "${key_result#[Yy]}" ] ; then
     ${COMPOSE} exec mcrit-server python -m mcrit.migrations.migrate_xcfg_split --mode inplace
     echo

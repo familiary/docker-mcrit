@@ -15,19 +15,90 @@ permissions:
 
 jobs:
 
-  build-test:
+  lint:
+    name: Lint the deployment
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
 
     steps:
       - name: Clone repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Build the docker image for MCRIT and MCRIT WEB 
-        run: ./test_build.sh
+
+      - name: Lint the MCRIT Dockerfile
+        uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
+        with:
+          dockerfile: docker/mcrit/Dockerfile
+          config: .hadolint.yaml
+
+      - name: Lint the MCRITweb Dockerfile
+        uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
+        with:
+          dockerfile: docker/mcritweb/Dockerfile
+          config: .hadolint.yaml
+
+      - name: Validate the compose files
+        run: |
+          set -euo pipefail
+          docker compose -f docker-compose.yml config -q
+          docker compose -f docker-compose-dev.yml config -q
+
+      - name: Shellcheck the helper and entry scripts
+        run: |
+          set -euo pipefail
+          # the GitHub-hosted runners ship shellcheck, so nothing has to install it
+          find . -name '*.sh' -print0 | xargs -0 shellcheck
+
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # .env is the single source of the pinned versions; compose reads it directly, so CI
+      # reads it too rather than restating the tags here and letting the two drift.
+      - name: Read the pinned versions from .env
+        run: |
+          set -euo pipefail
+          grep -E '^[A-Z_]+=' .env >> "$GITHUB_ENV"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Build the MCRIT image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: ./docker/mcrit/
+          load: true
+          tags: mcrit:${{ env.MCRIT_TAG }}
+          build-args: |
+            MCRIT_TAG=${{ env.MCRIT_TAG }}
+            MCRIT_BRANCH=${{ env.MCRIT_BRANCH }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build the MCRITweb image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: ./docker/mcritweb/
+          load: true
+          tags: mcritweb:${{ env.MCRITWEB_TAG }}
+          build-args: |
+            MCRITWEB_BRANCH=${{ env.MCRITWEB_BRANCH }}
+            MCRITWEB_TAG=${{ env.MCRITWEB_TAG }}
+            MCRIT_TAG=${{ env.MCRIT_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Check functionality of the MCRIT image
-        run: docker run --rm mcrit /entry_test.sh
+        run: docker run --rm --entrypoint /entry_test.sh "mcrit:${MCRIT_TAG}"
 
   tuning-doc-mirror:
     name: docs/TUNING.md matches mcrit
