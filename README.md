@@ -41,10 +41,25 @@ the administrator.
 `.env` holds the version pins and is read by both compose files. `MCRIT_AUTH_TOKEN` is read from
 the environment or from `.env` and passed to the server and the worker.
 
-`config/` holds MCRIT's configuration modules and is mounted read-only over the installed package's
-own `mcrit/config/`. The deviations from MCRIT's stock configuration are `STORAGE_SERVER`,
-`QUEUE_SERVER` and `BAND_MATCHES_REQUIRED`, each carrying a comment saying why. `docs/TUNING.md`
-mirrors the upstream tuning guide.
+`config/` holds MCRIT's configuration modules as this repository ships them. The deviations from
+MCRIT's stock configuration are `STORAGE_SERVER`, `QUEUE_SERVER` and `BAND_MATCHES_REQUIRED`, each
+carrying a comment saying why. `docs/TUNING.md` mirrors the upstream tuning guide.
+
+A deployment's own settings go into `config.local/`, which is gitignored: at startup each MCRIT
+container copies `config/` into the installed package's config directory and then copies
+`config.local/` on top. A file there replaces the shipped module of the same name, so copy the
+whole module, edit it, and keep the settings you are not changing. Everything you do not override
+keeps tracking the repository and a `git pull` cannot conflict with your settings.
+
+If the MCRIT being deployed defines settings the assembled configuration does not carry, every
+MCRIT container says so at startup and keeps running:
+
+```
+WARNING: StorageConfig.py is missing settings the installed MCRIT defines: STORAGE_MONGODB_FLAGS
+```
+
+The setting is absent rather than at its upstream default, so add it to `config/`, or to the
+`config.local/` file that replaced it.
 
 MongoDB reads `mongodb/mongod.conf`, mounted read-only into the container, so its settings are a
 file to edit rather than flags appended to a `command:` list. The WiredTiger cache size is the

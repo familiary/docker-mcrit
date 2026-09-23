@@ -1,0 +1,13 @@
+# Local configuration overlay
+
+Drop only the `config/*.py` files you actually override in here. At startup the MCRIT containers
+copy `config/` into the installed package's config directory and then copy whatever is in this
+directory on top, so a file here replaces the shipped default of the same name and everything else
+keeps tracking the repository.
+
+Everything in this directory except this README is gitignored, so a deployment's own settings - an
+`McritConfig.py` carrying an `AUTH_TOKEN`, a `StorageConfig.py` pointing at an external MongoDB -
+survive a `git pull` and never reach a commit.
+
+A file here is a whole module: copy the shipped `config/<name>.py`, edit it, and keep the rest of
+its settings, or the startup drift check will report the ones you dropped.

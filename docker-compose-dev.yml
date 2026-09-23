@@ -28,6 +28,9 @@ services:
         condition: service_healthy
     volumes:
       - ./repositories/mcrit:/opt/mcrit/
+      # mounted over the package config rather than assembled from config.default like the
+      # production file does: /opt/mcrit is a host checkout here, and assembling would write
+      # into the developer's working tree
       - ./config/:/opt/mcrit/mcrit/config/:ro
     entrypoint:
       - /entry_server.sh
@@ -51,6 +54,9 @@ services:
         condition: service_healthy
     volumes:
       - ./repositories/mcrit:/opt/mcrit/
+      # mounted over the package config rather than assembled from config.default like the
+      # production file does: /opt/mcrit is a host checkout here, and assembling would write
+      # into the developer's working tree
       - ./config/:/opt/mcrit/mcrit/config/:ro
     entrypoint:
       - /entry_worker.sh

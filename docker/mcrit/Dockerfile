@@ -22,11 +22,15 @@ RUN git clone --depth 1 -b "${MCRIT_BRANCH}" --single-branch https://github.com/
   && rm -rf /opt/mcrit/.git
 # MCRIT >= 1.8.0 declares its dependencies in pyproject.toml, so a single editable
 # install pulls them in - there is no requirements.txt to read anymore.
-# Editable, because the compose files mount the deployment's config/ over the package's
-# own mcrit/config/ and that has to be the config the running package reads.
+# Editable, because the entry scripts assemble the deployment's configuration into
+# /opt/mcrit/mcrit/config/ and that has to be the config the running package reads.
 # pytest is the "dev" extra's only part this image needs: /entry_test.sh runs the unit
 # tests, and a non-root runtime user cannot install it at startup.
 RUN --mount=type=cache,target=/root/.cache/pip pip install -e /opt/mcrit pytest
+
+# the configuration the installed MCRIT ships, kept before the entry scripts overwrite it so they
+# can report settings that this repository's config/ has not caught up with
+RUN cp -a /opt/mcrit/mcrit/config /opt/config.stock
 
 
 FROM ubuntu:24.04@sha256:224a1869083a311ef3f13648a154ba79832fbef6364d31493642ca03082da254
@@ -55,14 +59,18 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /opt/config.stock /opt/config.stock
 COPY --from=builder /opt/mcrit /opt/mcrit
 
+# sourced by the three entry scripts, so it needs no executable bit
+COPY ./entry_common.sh /entry_common.sh
 COPY ./entry_server.sh /entry_server.sh
 COPY ./entry_worker.sh /entry_worker.sh
 COPY ./entry_test.sh /entry_test.sh
 RUN chmod +x /entry_server.sh /entry_worker.sh /entry_test.sh
 
-# /opt/mcrit has to stay writable: the test entrypoint writes pytest's cache there
+# /opt/mcrit has to stay writable: the entry scripts assemble mcrit/config/ there, and the
+# test entrypoint writes pytest's cache
 RUN useradd -u 10001 -m mcrit && chown -R 10001:10001 /opt/mcrit
 
 WORKDIR /opt/mcrit

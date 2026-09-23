@@ -44,7 +44,10 @@ services:
       # locks down the API; MCRITweb needs the same value as its server token, see the README
       MCRIT_AUTH_TOKEN: ${MCRIT_AUTH_TOKEN:-}
     volumes:
-      - ./config/:/opt/mcrit/mcrit/config/:ro
+      # assembled into the installed package's config directory at startup, defaults first, so a
+      # deployment's own settings live in the untracked overlay and survive a pull
+      - ./config/:/opt/mcrit/config.default:ro
+      - ./config.local/:/opt/mcrit/config.local:ro
     entrypoint:
       - /entry_server.sh
     healthcheck:
@@ -74,7 +77,8 @@ services:
       # so the two halves of the image cannot end up configured differently
       MCRIT_AUTH_TOKEN: ${MCRIT_AUTH_TOKEN:-}
     volumes:
-      - ./config/:/opt/mcrit/mcrit/config/:ro
+      - ./config/:/opt/mcrit/config.default:ro
+      - ./config.local/:/opt/mcrit/config.local:ro
     entrypoint:
       - /entry_worker.sh
   mcritweb:
