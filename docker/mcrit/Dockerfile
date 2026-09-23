@@ -17,7 +17,7 @@ ENV PATH="/opt/venv/bin:${PATH}"
 # the venv's ensurepip ships pip only, and a pyproject.toml build needs setuptools>=77
 RUN --mount=type=cache,target=/root/.cache/pip pip install -U setuptools
 
-RUN git clone --depth 1 -b "${MCRIT_BRANCH}" --single-branch https://github.com/danielplohmann/mcrit.git /opt/mcrit \
+RUN git clone --depth 1 -b "${MCRIT_BRANCH}" --single-branch https://github.com/familiary/mcrit.git /opt/mcrit \
   && git -C /opt/mcrit rev-parse HEAD > /opt/mcrit/.git-revision \
   && rm -rf /opt/mcrit/.git
 # MCRIT >= 1.8.0 declares its dependencies in pyproject.toml, so a single editable
@@ -36,7 +36,7 @@ RUN cp -a /opt/mcrit/mcrit/config /opt/config.stock
 FROM ubuntu:24.04@sha256:224a1869083a311ef3f13648a154ba79832fbef6364d31493642ca03082da254
 ARG MCRIT_TAG
 
-LABEL org.opencontainers.image.source="https://github.com/danielplohmann/mcrit" \
+LABEL org.opencontainers.image.source="https://github.com/familiary/mcrit" \
       org.opencontainers.image.version="${MCRIT_TAG}" \
       org.opencontainers.image.licenses="GPL-3.0-only"
 

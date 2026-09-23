@@ -1,10 +1,10 @@
 # Docker MCRIT
-[![Test](https://github.com/danielplohmann/docker-mcrit/actions/workflows/test.yml/badge.svg)](https://github.com/danielplohmann/docker-mcrit/actions/workflows/test.yml)
+[![Test](https://github.com/familiary/docker-mcrit/actions/workflows/test.yml/badge.svg)](https://github.com/familiary/docker-mcrit/actions/workflows/test.yml)
 
 This repository is the Docker deployment of the MinHash-based Code Recognition and Investigation
 Toolkit. `docker-compose.yml` runs five services: MongoDB, the
-[MCRIT](https://github.com/danielplohmann/mcrit) server and worker (one image, built here from the
-upstream tag), the [MCRITweb](https://github.com/fkie-cad/mcritweb) frontend behind gunicorn, and
+[MCRIT](https://github.com/familiary/mcrit) server and worker (one image, built here from the
+upstream tag), the [MCRITweb](https://github.com/familiary/mcritweb) frontend behind gunicorn, and
 NGINX in front of it. The versions are pinned in `.env` - `MCRIT_TAG`/`MCRIT_BRANCH`,
 `MCRITWEB_TAG`/`MCRITWEB_BRANCH`, `MONGO_TAG` and `NGINX_TAG` - and moving them is how an upgrade
 is done. MCRIT itself was released at Botconf 2023
@@ -22,7 +22,7 @@ and MongoDB's cache defaults to about half of the host's RAM.
 ## First deployment
 
 ```bash
-git clone https://github.com/danielplohmann/docker-mcrit.git
+git clone https://github.com/familiary/docker-mcrit.git
 cd docker-mcrit
 chown -R 10001:10001 storage/mcritweb
 docker compose up -d
