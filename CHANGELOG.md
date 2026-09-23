@@ -59,6 +59,16 @@ deployment that means saying plainly what an operator has to *do*, which is what
   `WARNING: <file>.py is missing settings the installed MCRIT defines: ...` for each module that has
   fallen behind. It warns rather than fails: a missing setting is a deployment that is
   silently not using an upstream default, not a reason to refuse to start.
+- **A tracked `mongodb/mongod.conf`**, mounted read-only at `/etc/mongod.conf`
+  ([#3](https://github.com/danielplohmann/docker-mcrit/issues/3)), so MongoDB's settings are a file
+  to edit rather than flags to append to a `command:` list. It carries a commented-out
+  `storage.wiredTiger.engineConfig.cacheSizeGB`, which is the setting worth revisiting on a host
+  MongoDB shares - the default cache is about half of RAM minus 1 GB. `mongod` still logs to
+  stdout: the file deliberately sets no `systemLog.path`.
+- **NGINX compresses text responses** ([#9](https://github.com/danielplohmann/docker-mcrit/issues/9)):
+  `gzip on` for HTML, CSS, JavaScript, JSON and SVG above 1 KB, with `gzip_vary` so caches key on
+  the encoding and `gzip_proxied any` so it applies to the proxied MCRITweb responses, which is all
+  of them.
 
 ### Changed
 

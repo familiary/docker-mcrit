@@ -61,6 +61,12 @@ WARNING: StorageConfig.py is missing settings the installed MCRIT defines: STORA
 The setting is absent rather than at its upstream default, so add it to `config/`, or to the
 `config.local/` file that replaced it.
 
+MongoDB reads `mongodb/mongod.conf`, mounted read-only into the container, so its settings are a
+file to edit rather than flags appended to a `command:` list. The WiredTiger cache size is the
+setting worth revisiting: it defaults to about half of the host's RAM minus 1 GB, which is too much
+when MongoDB shares the host with the workers. The file sets no log path on purpose, so `mongod`
+keeps logging to stdout and `docker compose logs mongodb` shows it.
+
 NGINX serves plain HTTP by default, which is meant for a first look. For TLS, copy
 `nginx/ssl/fullchain.pem.example` and `nginx/ssl/privkey.pem.example` to the same names without the
 `.example` suffix, fill them with the certificate and key, and in the `nginx` service of
@@ -109,6 +115,27 @@ docker compose exec mongodb mongosh --quiet --eval 'db.adminCommand({setFeatureC
 From 7.0 onwards the command also requires `confirm: true`, so those two steps read
 `{setFeatureCompatibilityVersion: "7.0", confirm: true}`. If the corpus is disposable, `./reset.sh`
 discards it instead.
+
+### Check the SMDA escaper fingerprint after any rebuild
+
+MCRIT does not pin SMDA, so rebuilding the images can pull a newer SMDA whose instruction escaping
+differs. MinHashes are derived from the escaped representation, so when the escaping changes,
+previously indexed signatures stop being comparable to newly computed ones. **The failure is silent**:
+the old signatures still look valid and still match each other, while identical code submitted
+afterwards no longer finds them. SMDA 4.4.5 is the worked example - it corrected how
+segment-qualified memory operands are escaped, and altered about a fifth of the stored MinHashes on
+a real corpus.
+
+`/status` reports what the running build produces, so note it after a build and compare it after the
+next one:
+
+```bash
+curl -s http://127.0.0.1:8000/status | python3 -m json.tool | grep -E "smda_version|escaper_fingerprint"
+```
+
+An unchanged fingerprint means stored MinHashes stay valid across the rebuild and nothing is owed. A
+changed one means the index should be re-minhashed to stay internally consistent - the stored
+disassembly makes that a local recomputation, with no need to re-submit any samples.
 
 ## Development mode
 

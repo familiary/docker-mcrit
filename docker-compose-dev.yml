@@ -4,7 +4,8 @@ services:
     container_name: mongodb
     volumes:
       - ./storage/mongodb:/data/db
-    command: ["mongod", "--quiet"]
+      - ./mongodb/mongod.conf:/etc/mongod.conf:ro
+    command: ["mongod", "--config", "/etc/mongod.conf", "--quiet"]
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
       interval: 10s
