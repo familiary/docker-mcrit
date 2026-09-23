@@ -95,6 +95,27 @@ From 7.0 onwards the command also requires `confirm: true`, so those two steps r
 `{setFeatureCompatibilityVersion: "7.0", confirm: true}`. If the corpus is disposable, `./reset.sh`
 discards it instead.
 
+### Check the SMDA escaper fingerprint after any rebuild
+
+MCRIT does not pin SMDA, so rebuilding the images can pull a newer SMDA whose instruction escaping
+differs. MinHashes are derived from the escaped representation, so when the escaping changes,
+previously indexed signatures stop being comparable to newly computed ones. **The failure is silent**:
+the old signatures still look valid and still match each other, while identical code submitted
+afterwards no longer finds them. SMDA 4.4.5 is the worked example - it corrected how
+segment-qualified memory operands are escaped, and altered about a fifth of the stored MinHashes on
+a real corpus.
+
+`/status` reports what the running build produces, so note it after a build and compare it after the
+next one:
+
+```bash
+curl -s http://127.0.0.1:8000/status | python3 -m json.tool | grep -E "smda_version|escaper_fingerprint"
+```
+
+An unchanged fingerprint means stored MinHashes stay valid across the rebuild and nothing is owed. A
+changed one means the index should be re-minhashed to stay internally consistent - the stored
+disassembly makes that a local recomputation, with no need to re-submit any samples.
+
 ## Development mode
 
 `docker-compose-dev.yml` runs MCRIT and MCRITweb from host checkouts under `./repositories`, so
