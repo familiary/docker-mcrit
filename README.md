@@ -1,5 +1,6 @@
 # Docker MCRIT
 [![Test](https://github.com/familiary/docker-mcrit/actions/workflows/test.yml/badge.svg)](https://github.com/familiary/docker-mcrit/actions/workflows/test.yml)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/familiary/docker-mcrit)
 
 This repository is the Docker deployment of the MinHash-based Code Recognition and Investigation
 Toolkit. `docker-compose.yml` runs five services: MongoDB, the
