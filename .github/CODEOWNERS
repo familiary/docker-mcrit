@@ -1,0 +1,4 @@
+# Code owners for this repository.
+# The default-branch ruleset requires a code owner's approval before a merge,
+# so this line makes danielplohmann's review the one that counts on every path.
+* @danielplohmann

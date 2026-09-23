@@ -52,6 +52,10 @@ deployment that means saying plainly what an operator has to *do*, which is what
   `storage.wiredTiger.engineConfig.cacheSizeGB`, which is the setting worth revisiting on a host
   MongoDB shares - the default cache is about half of RAM minus 1 GB. `mongod` still logs to
   stdout: the file deliberately sets no `systemLog.path`.
+- **NGINX compresses text responses** ([#9](https://github.com/danielplohmann/docker-mcrit/issues/9)):
+  `gzip on` for HTML, CSS, JavaScript, JSON and SVG above 1 KB, with `gzip_vary` so caches key on
+  the encoding and `gzip_proxied any` so it applies to the proxied MCRITweb responses, which is all
+  of them.
 
 ### Changed
 
