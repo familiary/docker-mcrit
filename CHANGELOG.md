@@ -46,6 +46,10 @@ deployment that means saying plainly what an operator has to *do*, which is what
 - A `lint` job in CI: hadolint on both Dockerfiles, `docker compose config -q` on both compose
   files, and shellcheck over every `.sh`. `.hadolint.yaml` records why apt and pip version pinning
   are not enforced here.
+- **NGINX compresses text responses** ([#9](https://github.com/danielplohmann/docker-mcrit/issues/9)):
+  `gzip on` for HTML, CSS, JavaScript, JSON and SVG above 1 KB, with `gzip_vary` so caches key on
+  the encoding and `gzip_proxied any` so it applies to the proxied MCRITweb responses, which is all
+  of them.
 
 ### Changed
 
