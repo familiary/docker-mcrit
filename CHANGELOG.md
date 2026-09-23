@@ -21,6 +21,13 @@ deployment that means saying plainly what an operator has to *do*, which is what
 
 ## [Unreleased]
 
+## [2026-09-23] - MCRIT 1.9.0, MCRITweb 1.5.0
+
+MCRITweb 1.5.0: 46 pull requests, four security fixes and the function comparison view,
+alongside this repository's own modernization. **The MCRITweb upgrade migrates its database
+and needs one setting before it is deployed** - see Upgrading.
+
+
 ### Changed
 
 - The images and `clone_repositories.sh` clone from `github.com/familiary/*`, where MCRIT, MCRITweb
@@ -139,6 +146,52 @@ deployment that means saying plainly what an operator has to *do*, which is what
   and fill them in. `dhparam.pem` is not needed any more and is gone.
 - `FLASK_ENV` is unset everywhere. It has done nothing since Flask 2.3, and the value here was a
   filesystem path.
+
+
+### Upgrading
+
+**Set `TRUSTED_PROXY_COUNT` before deploying this.** MCRITweb 1.5.0 meters failed logins per source
+address, reading that address from `X-Forwarded-For` only as far back as the setting allows. It
+defaults to `0` - "served directly, trust no header" - and this deployment is never served directly:
+both shipped NGINX configurations proxy to `mcritweb:5000`. At `0`, MCRITweb sees NGINX's container
+address for every request, so **ten failed logins from anywhere refuse everyone's next login for
+fifteen minutes** and nothing is metered per attacker. Put it in `storage/mcritweb/config.py`:
+
+```python
+TRUSTED_PROXY_COUNT = 1
+```
+
+`1` is the count for this deployment as shipped; add one for each further proxy in front of it, such
+as a site load balancer or a CDN. Too low meters every user together, too high lets a caller choose
+their own throttle key, so it is worth counting. Development mode starts no NGINX, so an instance
+reached directly on port 5000 wants the default. Verify rather than assume: make one deliberately
+failed login **through the proxy**, then read what was recorded and clear it again.
+
+```bash
+docker exec mcritweb python3 -c "
+import sqlite3
+c=sqlite3.connect('/opt/mcritweb/instance/mcritweb.sqlite')
+for r in c.execute('select remote_addr, username, attempted_at from login_attempt'): print(r)"
+```
+
+A real client address means the count is right; NGINX's container address means it is too low. The
+throttle cannot be turned off - its limit and window are constants in MCRITweb, not settings.
+
+**MCRITweb migrates its own database on first start**, through idempotent migrations that alter
+nothing existing: a `login_attempt` table, a `query_upload` table, and user timestamps rewritten as
+explicit UTC. No operator action beyond restarting, but **back up `storage/mcritweb/mcritweb.sqlite`
+first** - it holds every account and API token, and is tens of kilobytes.
+
+**Existing query uploads are orphaned, and may be the only copy.** Until 1.4.8 a query upload was
+stored in `storage/mcritweb/temp/uploads/` under a SHA-256; 1.5.0 files it under the backend-issued
+job id, because the old scheme let any visitor overwrite another user's stored query by naming an
+upload after it. Every pre-upgrade file is unreachable, and nothing prunes that folder. A query made
+before the upgrade can no longer be promoted to a stored sample. **These are the submitted binaries
+themselves, and MCRIT never stored them** - a query does not add to the corpus - so copy them out
+before deleting. The filenames are genuine digests of the contents, so they stay identifiable.
+
+Measured on the reference instance: 33 accounts migrated intact; 741 orphaned uploads totalling
+494 MB dating back to 2023-05-08, of which 669 were PE and 36 ELF.
 
 ## [2026-09-08] - MCRIT 1.9.0, MCRITweb 1.4.8
 
