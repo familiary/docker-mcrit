@@ -21,6 +21,19 @@ deployment that means saying plainly what an operator has to *do*, which is what
 
 ## [Unreleased]
 
+### Added
+
+- A pull request that changes what a deployment is built from - `docker/`, `nginx/`, `config/`,
+  the compose files, `.env` or the helper scripts - has to add an entry here or carry the
+  `no-changelog` label; CI checks it. `RELEASING.md` describes how a bump is done and where this
+  repository sits in the ecosystem's release order.
+- Dependabot watches the pinned actions and the Ubuntu base images of both Dockerfiles.
+
+### Changed
+
+- CI pins `actions/checkout` to a commit SHA, no longer keeps the checkout's credentials on the
+  runner, and runs with a read-only token.
+
 ## [2026-09-08] - MCRIT 1.9.0, MCRITweb 1.4.8
 
 Correctness and operator-recovery release upstream, plus a large `getUniqueBlocks` speedup. **No

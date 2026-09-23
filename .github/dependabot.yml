@@ -1,0 +1,19 @@
+# Pinning actions to a commit SHA is what makes them immutable; it also means nothing updates
+# them. This is the other half of that decision: a pull request when a pinned action moves. The
+# base images are watched the same way, so an Ubuntu LTS bump arrives as a reviewable change
+# rather than as whatever `ubuntu:24.04` resolved to on the day someone rebuilt.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: docker
+    directories:
+      - /docker/mcrit
+      - /docker/mcritweb
+    schedule:
+      interval: monthly
