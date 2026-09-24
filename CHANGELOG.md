@@ -21,6 +21,16 @@ deployment that means saying plainly what an operator has to *do*, which is what
 
 ## [Unreleased]
 
+### Fixed
+
+- **NGINX cut every MCRITweb request off at 60 seconds**, not the 300 its configuration asks for.
+  Both site files set `uwsgi_read_timeout 300s`, but MCRITweb is reached through `proxy_pass`, and
+  the `uwsgi_*` directives only govern `uwsgi_pass`, so `proxy_read_timeout` stayed at its default.
+  A page, upload or passthrough call that took longer answered `504 Gateway Time-out` while gunicorn
+  (`-t 300`) was still working on it. Measured with a stand-in upstream that answers after 90 s: 504
+  at 60.0 s before, 200 at 87.7 s after. Both site files now set `proxy_read_timeout` and
+  `proxy_send_timeout` to 300 s.
+
 ## [2026-09-23] - MCRIT 1.9.0, MCRITweb 1.5.0
 
 MCRITweb 1.5.0: 46 pull requests, four security fixes and the function comparison view,
