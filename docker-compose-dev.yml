@@ -47,7 +47,7 @@ services:
   mcrit-worker:
     # same image as mcrit-server, which is the only service that builds it
     image: mcrit:${MCRIT_TAG:?}
-    container_name: mcrit-worker
+    # no container_name, so that `--scale mcrit-worker=N` works here too
     init: true
     depends_on:
       mongodb:

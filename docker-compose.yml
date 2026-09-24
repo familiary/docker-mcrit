@@ -63,7 +63,10 @@ services:
   mcrit-worker:
     # same image as mcrit-server, which is the only service that builds it
     image: mcrit:${MCRIT_TAG:?}
-    container_name: mcrit-worker
+    # no container_name: a fixed name allows one container, and several workers are how a
+    # deployment runs several jobs at once. They claim jobs from the queue atomically.
+    deploy:
+      replicas: ${MCRIT_WORKERS:-1}
     init: true
     restart: unless-stopped
     logging: *logging
@@ -102,6 +105,14 @@ services:
       - ./storage/mcritweb:/opt/mcritweb/instance
     entrypoint:
       - /entry_web_prod.sh
+    healthcheck:
+      # any HTTP answer means gunicorn is serving the app; a static file keeps the probe out of the
+      # views, though every request still makes MCRITweb's two small reads of its SQLite database
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://localhost:5000/static/style.css"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     ports: 
       - 127.0.0.1:5000:5000
   nginx:
@@ -111,8 +122,17 @@ services:
     security_opt:
       - no-new-privileges:true
     depends_on:
+      # started is not serving: until gunicorn listens, NGINX answers every request with a 502
       mcritweb:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      # a TCP probe rather than an HTTP one: the server blocks answer 444 to any Host other than
+      # their server_name, so an HTTP probe would fail on every deployment that sets its own
+      test: ["CMD", "nc", "-z", "127.0.0.1", "80"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/uwsgi_params:/etc/nginx/uwsgi_params:ro
