@@ -39,6 +39,16 @@ deployment that means saying plainly what an operator has to *do*, which is what
   (default `1`) sets how many run. MCRIT's queue claims a job with one `find_one_and_update` on an
   unset `locked_by`, and each worker has its own UUID, so two workers never take the same job.
 
+### Added
+
+- **Healthchecks for `mcritweb` and `nginx`, and NGINX waits for MCRITweb to serve.** NGINX used
+  to start as soon as the `mcritweb` container existed, and answered `502 Bad Gateway` until
+  gunicorn listened. With a stand-in MCRITweb that takes 20 s to start serving, a client got 502
+  for those 20 s before this change and none after it. `mcritweb` is probed with a static file
+  (any HTTP answer counts, as for `mcrit-server`); `nginx` with a TCP connect, because its server
+  blocks answer 444 to any Host but their `server_name` and an HTTP probe would fail on every
+  deployment that sets one.
+
 ### Upgrading
 
 - The worker container is now named by compose after the project (`docker-mcrit-mcrit-worker-1`
