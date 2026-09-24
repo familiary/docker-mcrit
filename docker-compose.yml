@@ -63,7 +63,10 @@ services:
   mcrit-worker:
     # same image as mcrit-server, which is the only service that builds it
     image: mcrit:${MCRIT_TAG:?}
-    container_name: mcrit-worker
+    # no container_name: a fixed name allows one container, and several workers are how a
+    # deployment runs several jobs at once. They claim jobs from the queue atomically.
+    deploy:
+      replicas: ${MCRIT_WORKERS:-1}
     init: true
     restart: unless-stopped
     logging: *logging

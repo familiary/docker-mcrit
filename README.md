@@ -102,6 +102,15 @@ through the compose environment puts it where `docker inspect` and `docker compo
 so anyone with access to the Docker host has the token: treat host access as equivalent to API
 access.
 
+A worker runs one job at a time, so the number of workers is the number of jobs that run at once.
+Set `MCRIT_WORKERS` in `.env` (default `1`) to run more; they claim jobs from the queue atomically,
+so they never take the same one. Each is a full matching process, so size memory per worker as
+`docs/TUNING.md` describes. For a one-off change, `docker compose up -d --scale mcrit-worker=N`
+does the same without editing `.env`. Worker containers are named by compose after
+the project (`docker-mcrit-mcrit-worker-1`, ... for a checkout in `docker-mcrit/`), so address them
+through the service:
+`docker compose logs mcrit-worker`.
+
 Log rotation needs nothing: every service logs to the `json-file` driver capped at five files of
 50 MB. Back up `./storage/mongodb`. A file-level copy is only valid with everything stopped; for a
 running instance, stream a dump out:

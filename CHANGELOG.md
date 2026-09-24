@@ -31,6 +31,20 @@ deployment that means saying plainly what an operator has to *do*, which is what
   at 60.0 s before, 200 at 87.7 s after. Both site files now set `proxy_read_timeout` and
   `proxy_send_timeout` to 300 s.
 
+### Changed
+
+- **Several workers can run side by side.** `mcrit-worker` had a fixed `container_name`, which
+  Docker allows for one container only, so `docker compose up --scale mcrit-worker=2` refused with
+  "Docker requires each container to have a unique name". The name is gone, and `MCRIT_WORKERS`
+  (default `1`) sets how many run. MCRIT's queue claims a job with one `find_one_and_update` on an
+  unset `locked_by`, and each worker has its own UUID, so two workers never take the same job.
+
+### Upgrading
+
+- The worker container is now named by compose after the project (`docker-mcrit-mcrit-worker-1`
+  for a checkout in `docker-mcrit/`) instead of `mcrit-worker`. Scripts that call `docker logs mcrit-worker` or `docker exec mcrit-worker` need
+  `docker compose logs mcrit-worker` / `docker compose exec mcrit-worker` instead.
+
 ## [2026-09-23] - MCRIT 1.9.0, MCRITweb 1.5.0
 
 MCRITweb 1.5.0: 46 pull requests, four security fixes and the function comparison view,
