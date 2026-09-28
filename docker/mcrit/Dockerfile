@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM ubuntu:24.04@sha256:224a1869083a311ef3f13648a154ba79832fbef6364d31493642ca03082da254 AS builder
+FROM ubuntu:26.04@sha256:da6fc2be547864451aa253836dd926da33623312df4a9a243e35dc877c378a78 AS builder
 ARG MCRIT_BRANCH
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -33,7 +33,7 @@ RUN --mount=type=cache,target=/root/.cache/pip pip install -e /opt/mcrit pytest
 RUN cp -a /opt/mcrit/mcrit/config /opt/config.stock
 
 
-FROM ubuntu:24.04@sha256:224a1869083a311ef3f13648a154ba79832fbef6364d31493642ca03082da254
+FROM ubuntu:26.04@sha256:da6fc2be547864451aa253836dd926da33623312df4a9a243e35dc877c378a78
 ARG MCRIT_TAG
 
 LABEL org.opencontainers.image.source="https://github.com/familiary/mcrit" \
