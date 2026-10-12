@@ -21,6 +21,39 @@ deployment that means saying plainly what an operator has to *do*, which is what
 
 ## [Unreleased]
 
+## [2026-10-12] - MCRIT 1.15.0, MCRITweb 1.5.0
+
+MCRIT 1.15.0 is a minor release with no repair jobs and no change to matching results. It makes
+`recalculatePicHashes` remember which samples it rehashed, fixes `McritClient.awaitResult` for a
+failed job and the client's handling of a non-JSON success answer, reuses one HTTP connection per
+client, lets families carry `actors`, can keep submitted binaries, and keeps the query cleanup
+working past a job without a result. MCRITweb 1.5.0 works against it unchanged: none of the REST
+API it uses changed.
+
+### Upgrading
+
+- **The first start builds five new indexes**: three on `samples`, and two for the
+  `sample_binaries` GridFS bucket, which is created whether or not binaries are kept.
+- **The next `recalculatePicHashes`, including one started by `repair.sh`, is still about a full
+  pass**, because no sample carries the new stamp yet. Runs after that select only what changed.
+  Nothing requires running it for this upgrade.
+- **Three new settings in `config/StorageConfig.py`, all off by default:**
+  - `STORAGE_KEEP_SUBMITTED_BINARIES` keeps every binary submitted through `/samples/binary` in
+    MongoDB, so `./storage/mongodb` grows by the size of the submissions.
+  - `STORAGE_SERVE_SUBMITTED_BINARIES` makes the API hand those binaries out. On most instances they
+    are malware, so turn it on only when the API is not reachable by anyone who should not
+    download them.
+  - `STORAGE_MONGODB_COMPACT_AFTER_CLEANUP` needs the `compact` privilege.
+
+  A `config.local/StorageConfig.py` copied from an earlier release lacks these three, and the
+  containers say so at startup. Add them to it.
+
+### Changed
+
+- `config/` and `docs/TUNING.md` follow MCRIT 1.15.0. `config/StorageConfig.py` gains the three
+  settings above, and `docs/TUNING.md` gains the sections on keeping submitted binaries and on
+  reclaiming space after the query cleanup.
+
 ## [2026-10-09] - MCRIT 1.14.0, MCRITweb 1.5.0
 
 MCRIT 1.14.0 is a minor release: it adds a report of what the band df cutoff skips
