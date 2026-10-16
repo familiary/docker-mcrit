@@ -29,6 +29,9 @@ class StorageConfig(ConfigInterface):
     STORAGE_MONGODB_USERNAME: Optional[str] = None
     STORAGE_MONGODB_PASSWORD: Optional[str] = None
     STORAGE_MONGODB_FLAGS: str = ""
+    # Time limit in milliseconds for the scans of a search on MongoDB (GET /search/{families,samples,functions});
+    # the lookups of a single id or sha256 are not limited. A search that runs out is answered 400. 0 = no limit.
+    STORAGE_MONGODB_SEARCH_MAX_TIME_MS: int = 30000
     # Enable periodic deletion of queried samples and their results after a given time
     STORAGE_MONGODB_ENABLE_CLEANUP: bool = False
     STORAGE_MONGODB_CLEANUP_DELTA: int = 60 * 60 * 24 * 7

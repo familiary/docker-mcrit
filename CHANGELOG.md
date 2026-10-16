@@ -21,6 +21,44 @@ deployment that means saying plainly what an operator has to *do*, which is what
 
 ## [Unreleased]
 
+## [2026-10-16] - MCRIT 1.16.0, MCRITweb 1.6.0
+
+MCRIT 1.16.0 is a minor release with no repair jobs and no change to matching results at default
+configuration. It bounds what one search or listing request can make the server do, rebuilds a
+sample's SMDA report from storage (`GET /samples/{id}/smda`), and keeps the pichash counts, function
+ranges and job queue correct when samples are deleted, imports fail or workers live in other time
+zones. MCRITweb 1.6.0 is its first release since 1.5.0: forty-two pull requests, twelve of them
+security fixes, a timeout on every backend call, and much cheaper pages. It works against MCRIT 1.16.0:
+it asks for at most 250 entries per page, well under the new caps.
+
+### Upgrading
+
+- **MCRIT's API caps what one request returns.** `GET /functions` and the search routes answer at
+  most 1,000 entries, and `POST /functions` takes at most 10,000 ids. A script that relied on
+  `GET /functions` returning every function now gets the first 1,000 and has to page.
+- **One new setting in `config/StorageConfig.py`:** `STORAGE_MONGODB_SEARCH_MAX_TIME_MS` (30 s, 0 = no
+  limit) bounds the MongoDB scans of a search, and a search that runs out is answered 400. A
+  `config.local/StorageConfig.py` copied from an earlier release lacks it, and the containers say
+  so at startup. Add it there.
+- **The first start** creates the two new `smda_extras` collections and their indexes, plus the
+  `pichash_counts` and `function_ranges` indexes where no rebuild had created them. A corpus that
+  deleted samples before this release still carries surplus pichash counts. They only matter with
+  `MINHASH_PICHASH_MAX_MATCHES` set, and `rebuildPicHashCountIndex()` clears them.
+- **In MCRITweb, changing a password now replaces the account's API token** and ends the account's
+  other sessions. Anything using the old token, such as the plugins or scripts against `/api`, needs
+  the new one from `/settings`.
+- **MCRITweb refuses to be framed by other sites** (`frame-ancestors 'self'`,
+  `X-Frame-Options: SAMEORIGIN`) and sends `nosniff`. The shipped NGINX configuration adds only HSTS,
+  so nothing is doubled. A local NGINX that adds either header itself should stop doing so.
+- **MCRITweb bounds every backend call with `MCRIT_CLIENT_TIMEOUT`**, `(10, 280)` seconds by default,
+  under NGINX's 300 s `uwsgi_read_timeout` and gunicorn's `-t 300`. A whole-corpus import or export
+  through the API passthrough needs a higher value in `storage/mcritweb/config.py`, and NGINX's and
+  gunicorn's limits raised with it.
+- **Files in `storage/mcritweb/temp/uploads/` whose names are 64 hex digits are orphaned** and can
+  be removed. MCRITweb no longer keeps a copy of a submitted binary there.
+- MCRITweb 1.6.0 requires Python 3.12, which the Ubuntu 24.04 image already has, and has no
+  database migrations.
+
 ## [2026-10-12] - MCRIT 1.15.0, MCRITweb 1.5.0
 
 MCRIT 1.15.0 is a minor release with no repair jobs and no change to matching results. It makes
