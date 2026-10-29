@@ -21,6 +21,32 @@ deployment that means saying plainly what an operator has to *do*, which is what
 
 ## [Unreleased]
 
+## [2026-10-29] - MCRIT 1.16.0, MCRITweb 1.7.0
+
+MCRITweb 1.7.0, with MCRIT unchanged at 1.16.0. Forty-eight pull requests since 1.6.0: ten security
+fixes (among them a reflected XSS through a result page's filter fields, an empty password that a
+password change accepted, and a loop analysis one logged-in visitor could keep a worker busy with for
+minutes), a reworked jobs page and cross compare, search as you type, and a UI pass for consistency,
+small screens and accessibility. Its suite ran against the published MCRIT 1.16.0 wheel: 2428
+passed, 19 skipped. No database migrations, and nothing in `config/` changes.
+
+### Upgrading
+
+- **Back up `storage/mcritweb/` as a whole.** MCRITweb's SQLite database switches to WAL mode at
+  the first start, so `mcritweb.sqlite-wal` and `mcritweb.sqlite-shm` sit next to `mcritweb.sqlite`.
+  Copying `mcritweb.sqlite` alone while the stack runs can miss the latest changes: stop the
+  `mcritweb` container first, or use the backup command in MCRITweb's README.
+- **The result cache in `storage/mcritweb/` is bounded**: 1 GiB and 1000 reports by default, oldest
+  written first out. Set `RESULT_CACHE_MAX_BYTES` / `RESULT_CACHE_MAX_FILES` in
+  `storage/mcritweb/config.py` to keep more. An existing cache over the bound is trimmed as new
+  reports are written.
+- **Pre-1.5.0 API tokens (32 characters) can now be retired.** Their holders see a warning on
+  `/settings`, and the admin users page offers to regenerate all of them. Setting
+  `ACCEPT_LEGACY_APITOKENS = False` in `storage/mcritweb/config.py` then refuses them with a 403
+  that says why. The default stays `True`, so nothing changes until an operator sets it.
+- The function pages' loop analysis reads at most `FIND_LOOPS_MAX_BYTES` (32 MiB) of a graph and
+  skips functions over 8000 blocks, saying so above the graph.
+
 ## [2026-10-16] - MCRIT 1.16.0, MCRITweb 1.6.0
 
 MCRIT 1.16.0 is a minor release with no repair jobs and no change to matching results at default
