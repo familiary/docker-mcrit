@@ -21,7 +21,7 @@ deployment that means saying plainly what an operator has to *do*, which is what
 
 ## [Unreleased]
 
-## [2026-10-29] - MCRIT 1.16.0, MCRITweb 1.7.0
+## [2026-11-09] - MCRIT 1.16.0, MCRITweb 1.7.0
 
 MCRITweb 1.7.0, with MCRIT unchanged at 1.16.0. Forty-eight pull requests since 1.6.0: ten security
 fixes (among them a reflected XSS through a result page's filter fields, an empty password that a
